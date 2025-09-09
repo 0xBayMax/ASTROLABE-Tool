@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 交易开仓计算器 - ASTROLABE ACADEMY</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: #ffffff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(30, 30, 30, 0.95);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.7;
+            font-weight: 300;
+        }
+
+        .main-content {
+            padding: 25px;
+        }
+
+        .module {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .module-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            letter-spacing: 0.5px;
+        }
+
+        .module-title::before {
+            content: "⚙️";
+            margin-right: 12px;
+            font-size: 0.8em;
+            color: #00d4ff;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 400;
+            color: #cccccc;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 0.95em;
+            background: rgba(60, 60, 60, 0.8);
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+            background: rgba(70, 70, 70, 0.9);
+        }
+
+        .calculated-value {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            color: #00d4ff;
+            font-weight: 500;
+            cursor: not-allowed;
+        }
+
+        .position-modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .position-module {
+            background: rgba(50, 50, 50, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .position-module::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e74c3c, #f39c12);
+        }
+
+        .position-module.pioneer::before {
+            background: linear-gradient(90deg, #e74c3c, #ff6b6b);
+        }
+
+        .position-module.expedition::before {
+            background: linear-gradient(90deg, #f39c12, #ffa726);
+        }
+
+        .position-module.assault::before {
+            background: linear-gradient(90deg, #27ae60, #4caf50);
+        }
+
+        .position-title {
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: 18px;
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .pioneer .position-title {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .expedition .position-title {
+            background: linear-gradient(135deg, #f39c12, #d68910);
+            color: white;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .assault .position-title {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .position-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .position-item {
+            text-align: center;
+            padding: 12px;
+            background: rgba(70, 70, 70, 0.6);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(3px);
+        }
+
+        .position-item label {
+            display: block;
+            font-weight: 400;
+            color: #cccccc;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            letter-spacing: 0.3px;
+        }
+
+        .position-item .value {
+            font-size: 1.05em;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .position-item input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9em;
+            background: rgba(60, 60, 60, 0.8);
+            color: #ffffff;
+        }
+
+        .profit-loss-row, .price-display-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .price-display-item {
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(3px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .price-display-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .price-display-item .value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .profit-loss-item {
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .profit-item {
+            background: rgba(39, 174, 96, 0.15);
+            border: 1px solid rgba(39, 174, 96, 0.4);
+            color: #4caf50;
+        }
+
+        .loss-item {
+            background: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            color: #ff6b6b;
+        }
+
+        .ratio-display {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(3px);
+        }
+
+        .ratio-display label {
+            display: block;
+            font-weight: 400;
+            color: #c4b5fd;
+            margin-bottom: 6px;
+            font-size: 0.9em;
+        }
+
+        .ratio-display .value {
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #ddd6fe;
+        }
+
+        .profit-loss-item input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            font-size: 0.95em;
+            background: rgba(60, 60, 60, 0.8);
+            color: #ffffff;
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+
+        .profit-loss-item input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
+            background: rgba(70, 70, 70, 0.9);
+        }
+
+        .profit-loss-item input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .profit-loss-item label {
+            margin-bottom: 15px;
+            display: block;
+            text-align: center;
+        }
+
+        .profit-loss-item .value {
+            text-align: center !important;
+            margin-top: 15px;
+        }
+
+        .unit {
+            font-size: 0.8em;
+            color: #999999;
+            margin-left: 4px;
+        }
+
+        /* 响应式设计 - 自适应屏幕比例 */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 95%;
+                padding: 15px;
+            }
+            
+            .position-modules {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                max-width: 98%;
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .position-modules {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .position-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .profit-loss-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .module {
+                padding: 15px;
+            }
+            
+            .position-module {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .position-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group input,
+            .form-group select {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+        }
+        
+        /* 确保内容不会溢出容器 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        .module, .position-module {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        input, select {
+            min-width: 0;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 交易开仓计算器</h1>
+            <p>For ASTROLABE VIP</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 基础参数模块 -->
+            <div class="module">
+                <div class="module-title">基础参数设置</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tradingPair">交易品种</label>
+                        <select id="tradingPair" onchange="updateCalculations()">
+                            <option value="BTC">BTC</option>
+                            <option value="ETH">ETH</option>
+                            <option value="XAU">XAU</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="totalMargin">总保证金金额 <span class="unit">(U)</span></label>
+                        <input type="number" id="totalMargin" placeholder="请输入总保证金" oninput="updateCalculations()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="leverage">杠杆倍数 <span class="unit">(倍)</span></label>
+                        <input type="number" id="leverage" placeholder="请输入杠杆倍数" oninput="updateCalculations()">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="openRatio">开仓比例 <span class="unit">(%)</span></label>
+                        <input type="number" id="openRatio" placeholder="请输入开仓比例" oninput="updateCalculations()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="direction">交易方向</label>
+                        <select id="direction" onchange="updateCalculations()">
+                            <option value="long">做多</option>
+                            <option value="short">做空</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="openMargin">开仓保证金金额 <span class="unit">(U)</span></label>
+                        <input type="number" id="openMargin" class="calculated-value" readonly>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="marketPrice">市场价格 <span class="unit">(U)</span></label>
+                        <input type="number" id="marketPrice" placeholder="请输入当前市场价格" oninput="updateCalculations()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 仓位模块 -->
+            <div class="position-modules">
+                <!-- 头仓-先锋军 (10%) -->
+                <div class="position-module pioneer">
+                    <div class="position-title">🎯 头仓-先锋军 (10%)</div>
+                    
+                    <div class="position-row">
+                        <div class="position-item">
+                            <label>开仓金额</label>
+                            <div class="value" id="pioneer-amount">0.00 <span class="unit">U</span></div>
+                        </div>
+                        <div class="position-item">
+                            <label>名义价值</label>
+                            <div class="value" id="pioneer-nominal">0.00 <span class="unit">U</span></div>
+                        </div>
+                        <div class="position-item">
+                            <label>开仓数量</label>
+                            <div class="value" id="pioneer-quantity">0.00 <span class="unit unit-display" id="pioneer-unit">BTC</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="price-display-row">
+                        <div class="price-display-item">
+                            <label>止盈价格</label>
+                            <div class="value" id="pioneer-profit-target-price" style="color: #27ae60;">0.00</div>
+                        </div>
+                        <div class="price-display-item">
+                            <label>止损价格</label>
+                            <div class="value" id="pioneer-loss-target-price" style="color: #e17055;">0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profit-loss-row">
+                        <div class="profit-loss-item profit-item">
+                            <label>止盈金额 (U)</label>
+                            <input type="number" id="pioneer-profit-price" placeholder="输入止盈金额" oninput="updateProfitLoss('pioneer')">
+                            <div class="value" id="pioneer-profit-amount" style="margin-top: 8px; color: #27ae60;">预计盈利: 0.00 U</div>
+                        </div>
+                        <div class="profit-loss-item loss-item">
+                            <label>止损金额 (U)</label>
+                            <input type="number" id="pioneer-loss-price" placeholder="输入止损金额" oninput="updateProfitLoss('pioneer')">
+                            <div class="value" id="pioneer-loss-amount" style="margin-top: 8px; color: #e17055;">预计亏损: 0.00 U</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ratio-display">
+                        <label>盈亏比</label>
+                        <div class="value" id="pioneer-ratio">0.00</div>
+                    </div>
+                </div>
+
+                <!-- 二仓-远征军 (30%) -->
+                <div class="position-module expedition">
+                    <div class="position-title">⚔️ 二仓-远征军 (30%)</div>
+                    
+                    <div class="position-row">
+                        <div class="position-item">
+                            <label>开仓金额</label>
+                            <div class="value" id="expedition-amount">0.00 <span class="unit">U</span></div>
+                        </div>
+                        <div class="position-item">
+                            <label>名义价值</label>
+                            <div class="value" id="expedition-nominal">0.00 <span class="unit">U</span></div>
+                        </div>
+                        <div class="position-item">
+                            <label>开仓数量</label>
+                            <div class="value" id="expedition-quantity">0.00 <span class="unit unit-display" id="expedition-unit">BTC</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="price-display-row">
+                        <div class="price-display-item">
+                            <label>止盈价格</label>
+                            <div class="value" id="expedition-profit-target-price" style="color: #27ae60;">0.00</div>
+                        </div>
+                        <div class="price-display-item">
+                            <label>止损价格</label>
+                            <div class="value" id="expedition-loss-target-price" style="color: #e17055;">0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profit-loss-row">
+                        <div class="profit-loss-item profit-item">
+                            <label>止盈金额 (U)</label>
+                            <input type="number" id="expedition-profit-price" placeholder="输入止盈金额" oninput="updateProfitLoss('expedition')">
+                            <div class="value" id="expedition-profit-amount" style="margin-top: 8px; color: #27ae60;">预计盈利: 0.00 U</div>
+                        </div>
+                        <div class="profit-loss-item loss-item">
+                            <label>止损金额 (U)</label>
+                            <input type="number" id="expedition-loss-price" placeholder="输入止损金额" oninput="updateProfitLoss('expedition')">
+                            <div class="value" id="expedition-loss-amount" style="margin-top: 8px; color: #e17055;">预计亏损: 0.00 U</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ratio-display">
+                        <label>盈亏比</label>
+                        <div class="value" id="expedition-ratio">0.00</div>
+                    </div>
+                </div>
+
+                <!-- 三仓-冲锋军 (60%) -->
+                <div class="position-module assault">
+                    <div class="position-title">🚀 三仓-冲锋军 (60%)</div>
+                    
+                    <div class="position-row">
+                        <div class="position-item">
+                            <label>开仓金额</label>
+                            <div class="value" id="assault-amount">0.00 <span class="unit">U</span></div>
+                        </div>
+                        <div class="position-item">
+                            <label>名义价值</label>
+                            <div class="value" id="assault-nominal">0.00 <span class="unit">U</span></div>
+                        </div>
+                        <div class="position-item">
+                            <label>开仓数量</label>
+                            <div class="value" id="assault-quantity">0.00 <span class="unit unit-display" id="assault-unit">BTC</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="price-display-row">
+                        <div class="price-display-item">
+                            <label>止盈价格</label>
+                            <div class="value" id="assault-profit-target-price" style="color: #27ae60;">0.00</div>
+                        </div>
+                        <div class="price-display-item">
+                            <label>止损价格</label>
+                            <div class="value" id="assault-loss-target-price" style="color: #e17055;">0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="profit-loss-row">
+                        <div class="profit-loss-item profit-item">
+                            <label>止盈金额 (U)</label>
+                            <input type="number" id="assault-profit-price" placeholder="输入止盈金额" oninput="updateProfitLoss('assault')">
+                            <div class="value" id="assault-profit-amount" style="margin-top: 8px; color: #27ae60;">预计盈利: 0.00 U</div>
+                        </div>
+                        <div class="profit-loss-item loss-item">
+                            <label>止损金额 (U)</label>
+                            <input type="number" id="assault-loss-price" placeholder="输入止损金额" oninput="updateProfitLoss('assault')">
+                            <div class="value" id="assault-loss-amount" style="margin-top: 8px; color: #e17055;">预计亏损: 0.00 U</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ratio-display">
+                        <label>盈亏比</label>
+                        <div class="value" id="assault-ratio">0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取交易品种单位
+        function getTradingUnit(pair) {
+            switch(pair) {
+                case 'BTC': return 'BTC';
+                case 'ETH': return 'ETH';
+                case 'XAU': return '手';
+                default: return 'BTC';
+            }
+        }
+
+        // 更新所有计算
+        function updateCalculations() {
+            const totalMargin = parseFloat(document.getElementById('totalMargin').value) || 0;
+            const openRatio = parseFloat(document.getElementById('openRatio').value) || 0;
+            const leverage = parseFloat(document.getElementById('leverage').value) || 0;
+            const marketPrice = parseFloat(document.getElementById('marketPrice').value) || 0;
+            const tradingPair = document.getElementById('tradingPair').value;
+            
+            // 计算开仓保证金
+            const openMargin = totalMargin * (openRatio / 100);
+            document.getElementById('openMargin').value = openMargin.toFixed(2);
+            
+            // 更新单位显示 - 修复单位更新问题
+            const unit = getTradingUnit(tradingPair);
+            const unitElements = document.querySelectorAll('.unit-display');
+            unitElements.forEach(element => {
+                element.textContent = unit;
+            });
+            
+            // 计算各仓位数据
+            updatePositionData('pioneer', openMargin, leverage, marketPrice, 0.10, tradingPair);
+            updatePositionData('expedition', openMargin, leverage, marketPrice, 0.30, tradingPair);
+            updatePositionData('assault', openMargin, leverage, marketPrice, 0.60, tradingPair);
+            
+            // 更新盈亏计算
+            updateProfitLoss('pioneer');
+            updateProfitLoss('expedition');
+            updateProfitLoss('assault');
+        }
+
+        // 更新仓位数据
+        function updatePositionData(position, openMargin, leverage, marketPrice, ratio, tradingPair) {
+            const amount = openMargin * ratio;
+            const nominal = amount * leverage;
+            let quantity = 0;
+            
+            if (marketPrice > 0) {
+                if (tradingPair === 'XAU') {
+                    // XAU的计算逻辑：使用用户提供的公式
+                    // Lots = (E × P × L) / (Price × 100)
+                    // 这里E是总资金量，P是开仓比例，L是杠杆，Price是黄金现价
+                    const totalMargin = parseFloat(document.getElementById('totalMargin').value) || 0;
+                    const openRatio = parseFloat(document.getElementById('openRatio').value) || 0;
+                    quantity = (totalMargin * (openRatio / 100) * ratio * leverage) / (marketPrice * 100);
+                } else {
+                    // BTC和ETH的计算逻辑
+                    quantity = nominal / marketPrice;
+                }
+            }
+            
+            document.getElementById(`${position}-amount`).textContent = `${amount.toFixed(2)} U`;
+            document.getElementById(`${position}-nominal`).textContent = `${nominal.toFixed(2)} U`;
+            document.getElementById(`${position}-quantity`).textContent = `${quantity.toFixed(6)} ${getTradingUnit(tradingPair)}`;
+        }
+
+        // 更新盈亏计算 - 按照用户要求：开仓数量 × 止盈金额 = 盈利，开仓数量 × 止损金额 = 亏损
+        function updateProfitLoss(position) {
+            const profitAmount = parseFloat(document.getElementById(`${position}-profit-price`).value) || 0;
+            const lossAmount = parseFloat(document.getElementById(`${position}-loss-price`).value) || 0;
+            
+            // 获取市场价格
+            const marketPrice = parseFloat(document.getElementById('marketPrice').value) || 0;
+            
+            // 获取当前仓位的数量
+            const quantityText = document.getElementById(`${position}-quantity`).textContent;
+            const quantity = parseFloat(quantityText.split(' ')[0]) || 0;
+            
+            // 获取交易品种
+            const tradingPair = document.getElementById('tradingPair').value;
+            
+            // 计算止盈价格和止损价格（默认做多）
+            // 做多时：止盈价格 = 市场价格 + 止盈金额，止损价格 = 市场价格 - 止损金额
+            const profitTargetPrice = marketPrice + profitAmount;
+            const lossTargetPrice = marketPrice - lossAmount;
+            
+            // 更新止盈价格和止损价格显示
+            const profitTargetElement = document.getElementById(`${position}-profit-target-price`);
+            const lossTargetElement = document.getElementById(`${position}-loss-target-price`);
+            
+            if (profitTargetElement) {
+                profitTargetElement.textContent = profitTargetPrice.toFixed(2);
+            }
+            if (lossTargetElement) {
+                lossTargetElement.textContent = lossTargetPrice.toFixed(2);
+            }
+            
+            let totalProfitAmount = 0;
+            let totalLossAmount = 0;
+            
+            if (quantity > 0) {
+                if (tradingPair === 'XAU') {
+                    // 黄金计算：1手 = 100盎司，每点变动 = 100美金
+                    // 开仓数量（手） × 止盈金额（点数） × 100（合约大小）
+                    totalProfitAmount = quantity * profitAmount * 100;
+                    totalLossAmount = quantity * lossAmount * 100;
+                } else {
+                    // BTC和ETH的计算：开仓数量 × 止盈金额 = 盈利
+                    totalProfitAmount = quantity * profitAmount;
+                    totalLossAmount = quantity * lossAmount;
+                }
+            }
+            
+            // 更新显示
+            document.getElementById(`${position}-profit-amount`).textContent = `预计盈利: ${totalProfitAmount.toFixed(2)} U`;
+            document.getElementById(`${position}-loss-amount`).textContent = `预计亏损: -${totalLossAmount.toFixed(2)} U`;
+            
+            // 计算盈亏比 - 格式化为 X:X
+            let ratioText = '0:0';
+            if (totalLossAmount > 0 && totalProfitAmount > 0) {
+                const ratio = totalProfitAmount / totalLossAmount;
+                if (ratio >= 1) {
+                    ratioText = `${ratio.toFixed(1)}:1`;
+                } else {
+                    ratioText = `1:${(1/ratio).toFixed(1)}`;
+                }
+            }
+            document.getElementById(`${position}-ratio`).textContent = ratioText;
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认值
+            document.getElementById('totalMargin').value = '2500';
+            document.getElementById('leverage').value = '60';
+            document.getElementById('openRatio').value = '15';
+            document.getElementById('marketPrice').value = '3500';
+            
+            // 初始计算
+            updateCalculations();
+        });
+    </script>
+</body>
+</html>
